@@ -24,14 +24,14 @@ func NewEmailQueue() *emailQueue {
 func (e *emailQueue) Work() {
 	for {
 		select {
-		case eChan := <-e.emailChannel:
+		case <-e.emailChannel:
 			// Enqueue message to workingChannel to avoid miscalculation in queue size.
 			e.workingChannel <- true
 
 			// Let's assume this time sleep is send email process
 			start := time.Now()
 			time.Sleep(time.Second * 5)
-			fmt.Println("Working on email at", eChan, ", duration:", time.Since(start))
+			fmt.Println("Working on email at", time.Now(), ", duration:", time.Since(start))
 
 			<-e.workingChannel
 		}
