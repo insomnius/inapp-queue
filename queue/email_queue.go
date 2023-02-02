@@ -2,7 +2,6 @@ package queue
 
 import (
 	"fmt"
-	"math/rand"
 	"time"
 )
 
@@ -31,8 +30,7 @@ func (e *emailQueue) Work() {
 
 			// Let's assume this time sleep is send email process
 			start := time.Now()
-			rand.Seed(time.Now().UnixNano())
-			time.Sleep(time.Second * time.Duration(rand.Intn(5)))
+			time.Sleep(time.Second * 5)
 			fmt.Println("Working on email at", eChan, ", duration:", time.Since(start))
 
 			<-e.workingChannel
