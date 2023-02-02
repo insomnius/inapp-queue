@@ -20,26 +20,24 @@ var (
 )
 
 func main() {
-	// Initialize channel with the 10K length
-	osSignal = make(chan os.Signal, 10000)
+	osSignal = make(chan os.Signal, 1)
 	signal.Notify(osSignal, os.Interrupt, syscall.SIGINT, syscall.SIGTERM)
-
-	fmt.Println("In app queue system")
 
 	emailQueue := queue.NewEmailQueue()
 
 	appEngine := gin.Default()
 	appEngine.POST("/users", func(c *gin.Context) {
-
+		startTime := time.Now()
 		// Enqueue into go channel
 		emailQueue.Enqueue("Send email to the user")
 
+		// Return the response
 		c.JSON(http.StatusCreated, gin.H{
 			"data": gin.H{
 				"username": "user1",
 				"email":    "user1@gmail.com",
 			},
-			"message": "success create new users",
+			"message": fmt.Sprintf("Success create user in %v", time.Since(startTime)),
 			"status":  http.StatusCreated,
 		})
 	})
@@ -48,16 +46,19 @@ func main() {
 		Handler: appEngine,
 	}
 
+	// Start the server concurrently
 	go func() {
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			fmt.Printf("Unexpected server error because of: %v\n", err)
 		}
 	}()
 
+	// Start the email queue concurrently, with 10 worker
 	for i := 0; i < 10; i++ {
 		go emailQueue.Work()
 	}
 
+	// Catch the exit signal
 	<-osSignal
 
 	fmt.Println("Terminating server")
